@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小红书标题生成器 - 爆款标题一键生成</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 span {
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #764ba2;
+      box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .result-section {
+      margin-top: 30px;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .result-header h3 {
+      color: #333;
+      font-size: 18px;
+    }
+
+    .copy-btn {
+      background: #f0f0f0;
+      color: #666;
+      padding: 6px 12px;
+      font-size: 12px;
+      width: auto;
+      border-radius: 8px;
+    }
+
+    .copy-btn:hover {
+      background: #e0e0e0;
+      transform: none;
+      box-shadow: none;
+    }
+
+    pre {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #333;
+      border: 1px solid #e0e0e0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .lock-overlay {
+      position: relative;
+    }
+
+    .lock-badge {
+      display: inline-block;
+      background: #ff9800;
+      color: white;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 10px;
+    }
+
+    .unlock-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      margin-top: 15px;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 支付弹窗样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 30px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .price {
+      font-size: 48px;
+      color: #f5576c;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .price small {
+      font-size: 16px;
+    }
+
+    .qr-code {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+
+    .qr-code img {
+      width: 200px;
+      height: 200px;
+      margin-bottom: 10px;
+    }
+
+    .pay-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin-top: 10px;
+    }
+
+    .close-modal {
+      background: #f0f0f0;
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .payment-methods {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .method-btn {
+      flex: 1;
+      background: #f8f9fa;
+      color: #333;
+      border: 2px solid #e0e0e0;
+      padding: 10px;
+    }
+
+    .method-btn.active {
+      border-color: #667eea;
+      background: #f0f0ff;
+    }
+
+    .success-icon {
+      font-size: 60px;
+      color: #4caf50;
+      margin-bottom: 20px;
+    }
+
+    .error {
+      background: #fee;
+      color: #c33;
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <span>📝</span>
+      小红书标题生成器
+    </h1>
+    <p class="subtitle">AI智能生成爆款标题，让你的笔记更受欢迎 ✨</p>
+
+    <div class="input-group">
+      <label>📌 输入主题</label>
+      <input 
+        type="text" 
+        id="topic" 
+        placeholder="例如：护肤、穿搭、旅行、美食..."
+        autocomplete="off"
+      />
+    </div>
+
+    <button id="generateBtn" onclick="generate()">
+      生成标题 🚀
+    </button>
+
+    <div class="result-section" id="resultSection" style="display: none;">
+      <div class="result-header">
+        <h3>🎯 生成的标题 <span id="lockBadge" class="lock-badge" style="display: none;">🔒 已锁3/10</span></h3>
+        <button class="copy-btn" onclick="copyResult()">复制全部</button>
+      </div>
+      <pre id="result"></pre>
+      <button id="unlockBtn" class="unlock-btn" style="display: none;" onclick="showPaymentModal()">
+        🔓 解锁全部标题（仅需9.9元）
+      </button>
+    </div>
+  </div>
+
+  <!-- 支付弹窗 -->
+  <div id="paymentModal" class="modal">
+    <div class="modal-content" id="modalContent">
+      <h2>🔓 解锁全部标题</h2>
+      <p>支付后即可查看全部10个爆款标题</p>
+      <div class="price">
+        ¥9.9<small>/次</small>
+      </div>
+      
+      <div class="payment-methods">
+        <button class="method-btn active" onclick="selectPayment('wechat')">
+          💚 微信支付
+        </button>
+        <button class="method-btn" onclick="selectPayment('alipay')">
+          💙 支付宝
+        </button>
+      </div>
+      
+      <div id="paymentContent">
+        <!-- 微信支付二维码区域 -->
+        <div class="qr-code" id="wechatQR">
+          <div style="font-size: 48px; margin-bottom: 10px;">💚</div>
+          <div style="font-weight: bold; margin-bottom: 5px;">微信支付</div>
+          <div style="font-size: 12px; color: #999;">扫码支付 ¥9.9</div>
+          <div style="background: #e0e0e0; width: 200px; height: 200px; margin: 15px auto; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
+            <div style="font-size: 14px; color: #666;">演示二维码<br>实际支付时替换</div>
+          </div>
+        </div>
+        
+        <!-- 支付宝支付二维码区域（初始隐藏） -->
+        <div class="qr-code" id="alipayQR" style="display: none;">
+          <div style="font-size: 48px; margin-bottom: 10px;">💙</div>
+          <div style="font-weight: bold; margin-bottom: 5px;">支付宝支付</div>
+          <div style="font-size: 12px; color: #999;">扫码支付 ¥9.9</div>
+          <div style="background: #e0e0e0; width: 200px; height: 200px; margin: 15px auto; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
+            <div style="font-size: 14px; color: #666;">演示二维码<br>实际支付时替换</div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="pay-btn" onclick="processPayment()">
+        我已支付，立即解锁
+      </button>
+      <button class="close-modal" onclick="closePaymentModal()">
+        取消
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let fullResult = []; // 存储所有标题
+    let isUnlocked = false; // 是否已解锁
+    let currentPaymentMethod = 'wechat'; // 当前支付方式
+
+    async function generate() {
+      const topicInput = document.getElementById("topic");
+      const topic = topicInput.value.trim();
+      const btn = document.getElementById("generateBtn");
+      const resultSection = document.getElementById("resultSection");
+      const resultPre = document.getElementById("result");
+      const unlockBtn = document.getElementById("unlockBtn");
+      const lockBadge = document.getElementById("lockBadge");
+
+      if (!topic) {
+        alert("请输入主题内容");
+        topicInput.focus();
+        return;
+      }
+
+      // 重置解锁状态
+      isUnlocked = false;
+      unlockBtn.style.display = "none";
+      lockBadge.style.display = "none";
+
+      // 显示加载状态
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="loading"></span> 生成中...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch("http://localhost:3000/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ topic })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        // 存储所有标题
+        fullResult = data.result.split("\n").filter(title => title.trim());
+        
+        // 显示前3条
+        const displayText = fullResult.slice(0, 3).join("\n");
+        const remainingCount = fullResult.length - 3;
+        
+        if (remainingCount > 0) {
+          resultPre.innerText = displayText + "\n\n...\n🔒 剩余 " + remainingCount + " 个标题已锁定，支付9.9元解锁全部";
+          unlockBtn.style.display = "block";
+          lockBadge.style.display = "inline-block";
+          lockBadge.innerText = `🔒 已锁 ${remainingCount}/${fullResult.length}`;
+        } else {
+          resultPre.innerText = displayText;
+        }
+        
+        resultSection.style.display = "block";
+        
+      } catch (error) {
+        console.error("生成失败:", error);
+        resultPre.innerText = `生成失败: ${error.message}\n\n请确保后端服务已启动 (node server.js)`;
+        resultSection.style.display = "block";
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    function showPaymentModal() {
+      if (isUnlocked) {
+        // 如果已经解锁，直接显示全部内容
+        displayFullContent();
+        return;
+      }
+      document.getElementById("paymentModal").style.display = "flex";
+    }
+
+    function closePaymentModal() {
+      document.getElementById("paymentModal").style.display = "none";
+    }
+
+    function selectPayment(method) {
+      currentPaymentMethod = method;
+      
+      // 更新按钮样式
+      document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // 切换二维码显示
+      if (method === 'wechat') {
+        document.getElementById('wechatQR').style.display = 'block';
+        document.getElementById('alipayQR').style.display = 'none';
+      } else {
+        document.getElementById('wechatQR').style.display = 'none';
+        document.getElementById('alipayQR').style.display = 'block';
+      }
+    }
+
+    function processPayment() {
+      // 这里应该调用真实的支付接口
+      // 模拟支付处理
+      const modalContent = document.getElementById('modalContent');
+      
+      // 显示支付处理中
+      modalContent.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+          <div class="loading" style="border-color: #667eea; border-top-color: transparent;"></div>
+          <h3>支付处理中...</h3>
+          <p style="color: #666; margin-top: 10px;">请稍候，正在验证支付信息</p>
+        </div>
+      `;
+      
+      // 模拟支付验证（1.5秒后成功）
+      setTimeout(() => {
+        // 支付成功
+        isUnlocked = true;
+        
+        // 保存解锁状态到localStorage
+        localStorage.setItem('titleUnlocked', 'true');
+        localStorage.setItem('unlockedTitles', JSON.stringify(fullResult));
+        
+        // 显示成功界面
+        modalContent.innerHTML = `
+          <div style="text-align: center; padding: 20px;">
+            <div class="success-icon">✅</div>
+            <h2 style="color: #4caf50;">支付成功！</h2>
+            <p>恭喜你已解锁全部标题</p>
+            <button class="pay-btn" onclick="closePaymentModalAndShow()" style="margin-top: 20px;">
+              查看全部标题
+            </button>
+          </div>
+        `;
+        
+        // 3秒后自动关闭并显示内容
+        setTimeout(() => {
+          closePaymentModalAndShow();
+        }, 2000);
+      }, 1500);
+    }
+    
+    function closePaymentModalAndShow() {
+      closePaymentModal();
+      displayFullContent();
+    }
+    
+    function displayFullContent() {
+      // 显示所有标题
+      const resultPre = document.getElementById("result");
+      const unlockBtn = document.getElementById("unlockBtn");
+      const lockBadge = document.getElementById("lockBadge");
+      
+      if (fullResult.length > 0) {
+        resultPre.innerText = fullResult.join("\n");
+        unlockBtn.style.display = "none";
+        lockBadge.style.display = "none";
+        
+        // 添加解锁成功提示
+        const resultSection = document.getElementById("resultSection");
+        const header = resultSection.querySelector('.result-header h3');
+        const originalText = header.innerHTML;
+        header.innerHTML = '🎯 生成的标题 <span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">✅ 已解锁全部</span>';
+        
+        // 3秒后恢复原样
+        setTimeout(() => {
+          header.innerHTML = originalText;
+        }, 3000);
+      }
+    }
+
+    function copyResult() {
+      const resultText = document.getElementById("result").innerText;
+      if (!resultText) return;
+      
+      navigator.clipboard.writeText(resultText).then(() => {
+        const copyBtn = document.querySelector(".copy-btn");
+        const originalText = copyBtn.innerText;
+        copyBtn.innerText = "✅ 已复制";
+        setTimeout(() => {
+          copyBtn.innerText = originalText;
+        }, 2000);
+      }).catch(err => {
+        console.error("复制失败:", err);
+        alert("复制失败，请手动复制");
+      });
+    }
+
+    // 检查是否有已解锁的内容
+    function checkUnlockedStatus() {
+      const savedUnlocked = localStorage.getItem('titleUnlocked');
+      const savedTitles = localStorage.getItem('unlockedTitles');
+      
+      if (savedUnlocked === 'true' && savedTitles) {
+        try {
+          fullResult = JSON.parse(savedTitles);
+          isUnlocked = true;
+          displayFullContent();
+        } catch(e) {
+          console.error('读取缓存失败');
+        }
+      }
+    }
+    
+    // 页面加载时检查
+    checkUnlockedStatus();
+
+    // 支持回车键生成
+    document.getElementById("topic").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        generate();
+      }
+    });
+    
+    // 点击模态框背景关闭
+    window.onclick = function(event) {
+      const modal = document.getElementById("paymentModal");
+      if (event.target === modal) {
+        closePaymentModal();
+      }
+    }
+  </script>
+</body>
+</html>
